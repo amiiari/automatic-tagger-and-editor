@@ -1,0 +1,13 @@
+/validation-arena/originals
+/validation-arena/resized
+*.pt
+*.onnx
+__pycache__
+venv/
+.venv/
+env/
+/validation-arena/posts.jsonl
+*.pyc
+*.safetensors
+*.pth
+*.bin

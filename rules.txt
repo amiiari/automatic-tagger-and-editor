@@ -1,0 +1,8 @@
+IF (1girl, futanari) REPLACE (1girl) WITH (1futa)
+|
+|
+IF (short_hair, medium hair) DELETE (medium_hair)
+IF (short_hair, long hair) DELETE (short_hair)
+|
+|
+IF (puckered_lips) REPLACE (puckered_lips) WITH (parted_lips)
