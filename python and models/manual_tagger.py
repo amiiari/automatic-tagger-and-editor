@@ -104,13 +104,37 @@ class App:
 
     def update_img(self, event=None):
         if self.raw_img is None: return
-        w, h = self.il.winfo_width(), self.il.winfo_height()
-        if w < 10 or h < 10: return
-        tmp = self.raw_img.copy()
-        tmp.thumbnail((w, h), Image.Resampling.LANCZOS)
-        self.ph = ImageTk.PhotoImage(tmp); self.il.config(image=self.ph)
+        
+        # Get the actual pixel size of the container
+        w = self.il.winfo_width()
+        h = self.il.winfo_height()
+        
+        # If the window just opened, it might report size 1
+        if w <= 1 or h <= 1: 
+            self.root.after(100, self.update_img)
+            return
 
-    def on_resize(self, event): self.update_img()
+        # Create the thumbnail without changing the label's required size
+        tmp = self.raw_img.copy()
+        tmp.thumbnail((w - 4, h - 4), Image.Resampling.LANCZOS)
+        
+        new_ph = ImageTk.PhotoImage(tmp)
+        self.il.config(image=new_ph)
+        self.ph = new_ph # Keep reference so it isn't garbage collected
+
+    def on_resize(self, event):
+        # Only trigger if the width or height actually changed significantly
+        # This prevents the "pixel-creep" loop
+        if hasattr(self, '_last_size'):
+            if abs(self._last_size[0] - event.width) < 3 and abs(self._last_size[1] - event.height) < 3:
+                return
+        
+        self._last_size = (event.width, event.height)
+        
+        # Use 'after_cancel' to wait for the user to STOP dragging before redrawing
+        if hasattr(self, '_resize_timer'):
+            self.root.after_cancel(self._resize_timer)
+        self._resize_timer = self.root.after(100, self.update_img)
 
     def kb(self, e):
         if e.keysym in ('Tab', 'Return', 'Up', 'Down'): return
