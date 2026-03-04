@@ -25,10 +25,10 @@ but besides that! to download!
 1. make a new folder, click on the path (like the empty space beside Desktop > whatever > thing), and type in cmd to open a command prompt in that directory
 2. git clone https://github.com/amiiari/automatic-tagger-and-editor
 3. download "model.safetensors" from https://huggingface.co/fancyfeast/joytag/tree/main
-### **YOU MUST! do this first! ^^^
-5. put that model in the models folder inside the "python and models" folder
-6. put images in the input folder !!! can be anything just to see it work honestly
-7. run "please work.bat" (please work[.bat {i hope it works}])
+### **YOU MUST! do this first before going to step 4! ^^^
+4. put that model in the models folder inside the "python and models" folder
+5. put images in the input folder !!! can be anything just to see it work honestly
+6. run "please work.bat" (please work[.bat {i hope it works}])
 
 
 
