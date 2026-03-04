@@ -19,9 +19,15 @@ Manual Mode:
 
 
 
-how to start:
+if you're interested in downloading! **you need git and python 3.10+ on your machine (make sure python is added to PATH / or environement variables)** 
 
-### **YOU MUST! FIRST download the "model.safetensors" from https://huggingface.co/fancyfeast/joytag/tree/main, put it in the models folder!**
+but besides that! to download! 
+1. make a new folder, click on the path (like the empty space beside Desktop > whatever > thing), and type in cmd to open a command prompt in that directory
+2. git clone https://github.com/amiiari/automatic-tagger-and-editor
+3. download "model.safetensors" from https://huggingface.co/fancyfeast/joytag/tree/main ### **YOU MUST! do this first!
+4. put that model in the models folder inside the "python and models" folder
+5. put images in the input folder !!! can be anything just to see it work honestly
+6. run "please work.bat" (please work[.bat {i hope it works}])
 
 
 
