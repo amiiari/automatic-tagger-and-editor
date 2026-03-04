@@ -21,7 +21,7 @@ Manual Mode:
 
 how to start:
 
-### **YOU MUST! FIRST download the "model.safetensors" from https://huggingface.co/fancyfeast/joytag/tree/main, put them in the models folder!**
+### **YOU MUST! FIRST download the "model.safetensors" from https://huggingface.co/fancyfeast/joytag/tree/main, put it in the models folder!**
 
 
 
