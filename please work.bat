@@ -31,7 +31,7 @@ set THRESHOLD=0.20
 ::
 ::        add the tags you want in every single image here ! vvv
 ::
-set EXTRA_TAGS="amiiari ai_generated detailed absurdres"
+set EXTRA_TAGS="ai_generated"
 
 :: running the tagger!
 python batch_tagger.py ^
