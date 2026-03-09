@@ -1,13 +1,23 @@
+# models and training yeah
 /validation-arena/originals
 /validation-arena/resized
+/validation-arena/posts.jsonl
 *.pt
 *.onnx
-__pycache__
-venv/
-.venv/
-env/
-/validation-arena/posts.jsonl
-*.pyc
 *.safetensors
 *.pth
 *.bin
+
+# python and venv
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# specific exclusions
+# output/
+
+# windows systems
+desktop.ini
+Thumbs.db

@@ -31,16 +31,16 @@ set THRESHOLD=0.20
 ::
 ::        add the tags you want in every single image here ! vvv
 ::
-set EXTRA_TAGS=""
+set EXTRA_TAGS="amiiari ai_generated detailed absurdres"
 
 :: running the tagger!
-:: make sure there are NO BLANK LINES between the carets below
 python batch_tagger.py ^
  --input "../input" ^
  --output "../output" ^
  --threshold %THRESHOLD% ^
  --append %EXTRA_TAGS% ^
  --blacklist "../blacklist.txt" ^
+ --master_taglist "models/master_taglist.csv" ^
  --rules "../rules.txt"
 
 timeout /t 1 /nobreak > nul
