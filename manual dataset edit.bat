@@ -60,4 +60,4 @@ for /d %%D in ("%~dp0*") do (
 
 echo.
 echo Manual tagger windows opened above. Close them when done.
-pause
+exit
