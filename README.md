@@ -2,7 +2,7 @@
 
 this is a mega link for the installation video!! https://mega.nz/file/K2BDjLLI#2bR9g5D6dkAKE3e9mWxr71VPlW7_nm9siuQGhCymgiQ
 
-yes! this uses both joytag and the r34 tag database (100k+ relevant tags) to tag things really easy!
+yes! this uses both joytag and the r34 tag database (that i had to get myself omg it took a while [100k+ relevant tags]) to tag things really easy!
 - there is first the automatic tagger, you can adjust the accuracy, etc.
 - a manual tagger
 - i tried to include some more quality of life things, like 
