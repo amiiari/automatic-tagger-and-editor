@@ -116,6 +116,11 @@ class CustomizeApp:
         cp = configparser.ConfigParser()
         cp.read(CONFIG_FILE, encoding="utf-8")
 
+        # Ensure all sections exist
+        for section in ["batch", "api", "extra_tags", "target_tag", "filename_filters"]:
+            if not cp.has_section(section):
+                cp.add_section(section)
+
         cp.set("batch", "threshold", self.threshold_var.get())
         cp.set("batch", "max_posts", self.max_posts_var.get())
         cp.set("api", "user_id", self.api_user_id_var.get())
