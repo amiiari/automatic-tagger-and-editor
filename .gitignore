@@ -1,0 +1,45 @@
+# Model weights — download separately from HuggingFace
+*.safetensors
+*.pt
+*.onnx
+*.pth
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Validation arena output
+validation-arena/sw_predictions.pt
+validation-arena/jt_predictions.pt
+validation-arena/ground_truth.pt
+validation-arena/detailed_metrics.txt
+validation-arena/sw_model.onnx
+
+# Training
+training/checkpoints/
+*.ckpt
+
+# Windows
+desktop.ini
+Thumbs.db
+*.lnk
+
+# macOS
+.DS_Store
+
+# Output files (uncomment to ignore)
+# output/
+# *.txt
+
+# Config — contains API keys, do not commit
+config.ini
+python and models/config.ini

@@ -1,0 +1,15 @@
+#
+# ehhh this part is a bit ghetto i wont lie theres not much in here, but yes! 
+# i added a tiny bit of customizability since more doesnt hurt! 
+#
+# logical 
+#
+IF (1girl, futanari) REPLACE (1girl) WITH (1futa)
+IF (2girls, 1boy) REPLACE (2girls) WITH (1boy1girl)
+#
+# i dont know honestly
+#
+IF (microskirt) REPLACE (microskirt) WITH (miniskirt)
+IF (puckered_lips) REPLACE (puckered_lips) WITH (parted_lips)
+IF (mature_female) REPLACE (mature_female) WITH (milf)
+IF (engrish_text) REPLACE (engrish_text) WITH (english_text)
