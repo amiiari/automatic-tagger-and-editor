@@ -11,15 +11,21 @@ Image.MAX_IMAGE_PIXELS = 300000000
 CONFIG_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = CONFIG_DIR / "config.ini"
 
-def load_filename_filters():
-    """Load filename patterns to ignore from config.ini."""
+def load_suffix_ignore():
+    """Load filename suffixes to ignore from config.ini [suffix_ignore]."""
     try:
         cp = configparser.ConfigParser()
         cp.read(CONFIG_FILE, encoding="utf-8")
-        text = cp.get("filename_filters", "filters", fallback="").strip()
+        text = cp.get("suffix_ignore", "tags", fallback="").strip()
+        # Support both comma-separated and newline-separated formats
+        if "," in text:
+            return [s.strip().lower() for s in text.split(",") if s.strip()]
         return [s.strip().lower() for s in text.splitlines() if s.strip()]
     except Exception:
         return []
+
+# Alias for compatibility
+load_filename_filters = load_suffix_ignore
 
 
 def load_tags(p):
@@ -108,8 +114,8 @@ def main():
 
     os.makedirs(a.output, exist_ok=True)
     
-    # Load filename filters
-    filename_filters = load_filename_filters()
+    # Load suffix ignore list
+    suffix_ignore = load_suffix_ignore()
     
     # Get default image extensions
     default_suffixes = ('.png','.jpg','.jpeg','.webp')
@@ -121,11 +127,11 @@ def main():
         if ext not in default_suffixes:
             continue
         
-        # Check filename filters
-        filename_lower = f.lower()
+        # Check suffix ignore list (match against stem, not full filename)
+        stem = os.path.splitext(f)[0].lower()
         skip = False
-        for pattern in filename_filters:
-            if pattern in filename_lower:
+        for suffix in suffix_ignore:
+            if stem.endswith(suffix):
                 skip = True
                 break
         if skip:
