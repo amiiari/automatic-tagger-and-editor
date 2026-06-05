@@ -34,6 +34,22 @@ def load_dict(p):
                 d[name] = {"type": row[1].strip(), "count": row[2].strip() if len(row)>2 else "0"}
     return d
 
+def load_suffix_ignore():
+    """Load filename suffixes to ignore from config.ini [suffix_ignore]."""
+    try:
+        cp = configparser.ConfigParser()
+        cp.read(CONFIG_DIR / "config.ini", encoding="utf-8")
+        text = cp.get("suffix_ignore", "tags", fallback="").strip()
+        # Support both comma-separated and newline-separated formats
+        if "," in text:
+            return [s.strip().lower() for s in text.split(",") if s.strip()]
+        return [s.strip().lower() for s in text.splitlines() if s.strip()]
+    except Exception:
+        return []
+
+# Alias for compatibility with batch_tagger
+load_filename_filters = load_suffix_ignore
+
 
 def add_placeholder(entry, placeholder_text):
     """Add a dim placeholder/watermark to an Entry widget."""
@@ -1047,19 +1063,31 @@ if __name__ == "__main__":
     all_files = [f for f in os.listdir(a.input) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
     print(f"Found {len(all_files)} total files.")
     
+    # Load suffix ignore list from config.ini
+    suffix_ignore = load_suffix_ignore()
+    
     # 2. Filter logic: keep tagged files, or originals that have no tagged counterpart
     li = []
     for f in all_files:
         name, ext = os.path.splitext(f)
-        # Skip the censored images since you DONT NEED THEM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if "-pixiv" in f.lower():
-            continue
         
-        # If file ends in -tag, always keep it
+        # If file ends in -tag, always keep it (tagged version)
         if f.endswith("-tag" + ext):
             li.append(f)
+            continue
+        
+        # Check suffix_ignore for non-tagged files (match against stem)
+        stem_lower = os.path.splitext(f.lower())[0]
+        skip = False
+        for suffix in suffix_ignore:
+            if stem_lower.endswith(suffix):
+                skip = True
+                break
+        if skip:
+            continue
+        
         # If file is an original, only keep if the -tag version is NOT found
-        elif (name + "-tag" + ext) not in all_files:
+        if (name + "-tag" + ext) not in all_files:
             li.append(f)
             
     if not li:
