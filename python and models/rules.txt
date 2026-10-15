@@ -1,14 +1,13 @@
-#
-# ehhh this part is a bit ghetto i wont lie theres not much in here, but yes! 
-# i added a tiny bit of customizability since more doesnt hurt! 
-#
-# logical 
-#
+| Logical Priorities (Specific > General)
 IF (1girl, futanari) REPLACE (1girl) WITH (1futa)
 IF (2girls, 1boy) REPLACE (2girls) WITH (1boy1girl)
-#
-# i dont know honestly
-#
+|
+| Hair Hierarchy: Short overrides Medium and Long; Medium overrides Long
+IF (short_hair, medium_hair) DELETE (medium_hair)
+IF (short_hair, long_hair) DELETE (long_hair)
+IF (medium_hair, long_hair) DELETE (long_hair)
+|
+| Normalization / Cleanup
 IF (microskirt) REPLACE (microskirt) WITH (miniskirt)
 IF (puckered_lips) REPLACE (puckered_lips) WITH (parted_lips)
 IF (mature_female) REPLACE (mature_female) WITH (milf)

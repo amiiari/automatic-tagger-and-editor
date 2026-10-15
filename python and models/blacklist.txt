@@ -1,8 +1,6 @@
-#
-# unstable tags that are often inaccurate !!! you *can* up the confidence but ehh i like it right now
-# these are based on my own images! may differ
-# so please feel free to delete these all and add your own! or curate it LMAO
-#
+|
+| Unstable tags that are often inaccurate !!! 
+|
 ^^^
 hairpods
 eyelashes
@@ -147,6 +145,9 @@ valentine
 inverted_nipples
 wedding_band
 masturbation
+|
+| USELESS TAGS THAT AREN'T NEEDED !!!!!!!!! (personally i cant imagine anyone searching for these)
+|
 indie_virtual_youtuber
 ^_^
 bathtub
@@ -216,9 +217,15 @@ river
 rock
 mountainous_horizon
 coffee_mug
+|
+| artists and copyright
+|
 melonbooks
 taimanin_(series)
 street_fighter_zero_(series)
+|
+| metadata
+|
 patreon_logo
 patreon_url
 patreon_logo
@@ -244,9 +251,37 @@ id_card
 netorare
 romaji_text
 korean_text
-paid_reward
-photoshop_(medium)
-photoshop_medium
-1boy
-single_earring
-female_pov
+
+|
+| preset-managed tags (Proportions + Lower) - set these via the CM presets, never auto-tagged (added 2026-07-19)
+|
+ass_bigger_than_head
+big_breasts
+big_penis
+breasts_bigger_than_head
+full-package_futa
+full-package_futanari
+gigantic_penis
+huge_ass
+huge_breasts
+huge_penis
+hyper_penis
+large_ass
+large_breasts
+large_penis
+long_penis
+massive_breasts
+massive_penis
+medium_breasts
+penis
+penis_to_the_knees
+skindentation
+small_breasts
+thick_thighs
+vagina
+voluptuous
+
+
+industrial_piercing
+barbell_piercing
+meme_attire

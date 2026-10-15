@@ -43,3 +43,7 @@ Thumbs.db
 # Config — contains API keys, do not commit
 config.ini
 python and models/config.ini
+
+# local backups / caches
+*.bak-*
+*.cache.pkl

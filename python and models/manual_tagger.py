@@ -26,13 +26,43 @@ TAG_COLORS = {
 def load_dict(p):
     d = {}
     if not os.path.exists(p): return d
+    # 100k+ row CSV: keep a pickle cache next to it, rebuilt when the CSV changes
+    import pickle
+    cache = p + ".cache.pkl"
+    try:
+        if os.path.exists(cache) and os.path.getmtime(cache) >= os.path.getmtime(p):
+            with open(cache, 'rb') as f:
+                return pickle.load(f)
+    except Exception:
+        pass
     with open(p, 'r', encoding='utf-8') as f:
         r = csv.reader(f)
         for row in r:
             if len(row) >= 2:
                 name = row[0].replace(" ", "_").lower()
                 d[name] = {"type": row[1].strip(), "count": row[2].strip() if len(row)>2 else "0"}
+    try:
+        with open(cache, 'wb') as f:
+            pickle.dump(d, f, protocol=4)
+    except Exception:
+        pass
     return d
+
+def load_suffix_ignore():
+    """Load filename suffixes to ignore from config.ini [suffix_ignore]."""
+    try:
+        cp = configparser.ConfigParser()
+        cp.read(CONFIG_DIR / "config.ini", encoding="utf-8")
+        text = cp.get("suffix_ignore", "tags", fallback="").strip()
+        # Support both comma-separated and newline-separated formats
+        if "," in text:
+            return [s.strip().lower() for s in text.split(",") if s.strip()]
+        return [s.strip().lower() for s in text.splitlines() if s.strip()]
+    except Exception:
+        return []
+
+# Alias for compatibility with batch_tagger
+load_filename_filters = load_suffix_ignore
 
 
 def add_placeholder(entry, placeholder_text):
@@ -837,6 +867,8 @@ class App:
         self.refresh_ui()
 
     def on_text_key(self, event):
+        if getattr(self, 'lora_mode', False):
+            return  # Skip live refresh in LoRA mode — user is free-editing raw text
         if event.keysym in ('space', 'Return', 'Tab'):
             words = self.tx.get("1.0", tk.END).split()
             for w in words: self.stable_tags.add(w)
@@ -964,15 +996,50 @@ class App:
         self.lb.selection_clear(0, tk.END); self.lb.selection_set(idx); self.lb.activate(idx); self.lb.see(idx)
         return 'break'
 
+    def _thumb_of(self, name):
+        """Screen-sized PIL thumbnail; safe to call from a worker thread."""
+        if not hasattr(self, "_thumb_size"):
+            self._thumb_size = (self.root.winfo_screenwidth() // 2,
+                                self.root.winfo_screenheight() - 250)
+        img = Image.open(os.path.join(self.in_d, name))
+        img.thumbnail(self._thumb_size, Image.Resampling.LANCZOS)
+        return img
+
+    def _preload_neighbors(self):
+        """Warm the cache for next/prev images in the background."""
+        if len(self.imgs) < 2:
+            return
+        targets = [self.imgs[(self.idx + 1) % len(self.imgs)],
+                   self.imgs[(self.idx - 1) % len(self.imgs)]]
+        def work():
+            for n in targets:
+                if n not in self._thumb_cache:
+                    try:
+                        self._thumb_cache[n] = self._thumb_of(n)
+                    except Exception:
+                        pass
+        threading.Thread(target=work, daemon=True).start()
+
     def ld(self):
         if self.idx < 0: self.idx = len(self.imgs) - 1
         if self.idx >= len(self.imgs): self.idx = 0
-            
-        n = self.imgs[self.idx]; p = os.path.join(self.in_d, n)
-        self.raw_img = Image.open(p)
-        w, h = self.root.winfo_screenwidth()//2, self.root.winfo_screenheight()-250
-        tmp = self.raw_img.copy(); tmp.thumbnail((w, h), Image.Resampling.LANCZOS)
+
+        if not hasattr(self, "_thumb_cache"):
+            self._thumb_cache = {}
+        n = self.imgs[self.idx]
+        tmp = self._thumb_cache.get(n)
+        if tmp is None:
+            tmp = self._thumb_of(n)
+        # move visible image to most-recently-used, evict oldest others
+        self._thumb_cache.pop(n, None)
+        self._thumb_cache[n] = tmp
+        while len(self._thumb_cache) > 8:
+            oldest = next(iter(self._thumb_cache))
+            if oldest == n:
+                break
+            self._thumb_cache.pop(oldest)
         self.ph = ImageTk.PhotoImage(tmp); self.il.config(image=self.ph)
+        self._preload_neighbors()
 
         name = os.path.splitext(n)[0]
         tp = os.path.join(self.out_d, name + ".txt")
@@ -985,7 +1052,6 @@ class App:
     
         self.tags_internal = []
 
-        print(f"DEBUG: Looking for text file at: {tp}")
         if os.path.exists(tp):
             if getattr(self, 'lora_mode', False):
                 with open(tp, 'r', encoding='utf-8') as f:
@@ -1040,26 +1106,38 @@ if __name__ == "__main__":
     p.add_argument("--dict", required=True); p.add_argument("--presets", default="presets.txt")
     p.add_argument("--lora-mode", action="store_true")
     a = p.parse_args()
-    rt = tk.Tk(); rt.title("Manual Curator")
+    rt = tk.Tk(); rt.title(f"Manual Curator: {os.path.basename(os.path.normpath(a.output))}")  # shows which category is being tagged
     
     # 1. Get all valid images
     print(f"Looking for images in: {a.input}")
     all_files = [f for f in os.listdir(a.input) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
     print(f"Found {len(all_files)} total files.")
     
+    # Load suffix ignore list from config.ini
+    suffix_ignore = load_suffix_ignore()
+    
     # 2. Filter logic: keep tagged files, or originals that have no tagged counterpart
     li = []
     for f in all_files:
         name, ext = os.path.splitext(f)
-        # Skip the censored images since you DONT NEED THEM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if "-pixiv" in f.lower():
-            continue
         
-        # If file ends in -tag, always keep it
+        # If file ends in -tag, always keep it (tagged version)
         if f.endswith("-tag" + ext):
             li.append(f)
+            continue
+        
+        # Check suffix_ignore for non-tagged files (match against stem)
+        stem_lower = os.path.splitext(f.lower())[0]
+        skip = False
+        for suffix in suffix_ignore:
+            if stem_lower.endswith(suffix):
+                skip = True
+                break
+        if skip:
+            continue
+        
         # If file is an original, only keep if the -tag version is NOT found
-        elif (name + "-tag" + ext) not in all_files:
+        if (name + "-tag" + ext) not in all_files:
             li.append(f)
             
     if not li:

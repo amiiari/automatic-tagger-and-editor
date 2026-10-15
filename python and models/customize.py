@@ -25,7 +25,7 @@ class CustomizeApp:
         self.presets_path = CONFIG_DIR / "presets.txt"
 
         # Current settings
-        self.threshold_var = tk.StringVar()
+        self.wd_threshold_var = tk.StringVar()
         self.extra_tags_var = tk.StringVar()
         self.filename_filters_var = tk.StringVar()
         self.api_user_id_var = tk.StringVar()
@@ -43,14 +43,11 @@ class CustomizeApp:
         """Load all config values, migrating from old locations if needed."""
         batch_path = PROJECT_DIR / "1. r34 tag.bat"
 
-        # Threshold
-        self.threshold_var.set(self._get_ini("batch", "threshold", "0.25"))
-        if not self._get_ini_raw("batch", "threshold"):
-            val = self._get_batch_val(batch_path, "THRESHOLD")
-            if val: self.threshold_var.set(val)
+        # Threshold (wd = SmilingWolf eva02 v3 - the only model now)
+        self.wd_threshold_var.set(self._get_ini("batch", "wd_threshold", "0.35"))
 
         # Extra tags
-        self.extra_tags_var.set(self._get_ini("extra_tags", "tags", "ai_generated joytag amiiari absurdres"))
+        self.extra_tags_var.set(self._get_ini("extra_tags", "tags", "ai_generated amiiari absurdres"))
         if not self._get_ini_raw("extra_tags", "tags"):
             val = self._get_batch_val(batch_path, "EXTRA_TAGS")
             if val: self.extra_tags_var.set(val)
@@ -78,12 +75,8 @@ class CustomizeApp:
         else:
             self.target_tag_var.set(self._get_ini("target_tag", "tag", ""))
 
-        # Filename filters
-        filter_path = CONFIG_DIR / "filename_filters.txt"
-        if filter_path.exists():
-            self.filename_filters_var.set(filter_path.read_text(encoding="utf-8").strip())
-        else:
-            self.filename_filters_var.set(self._get_ini("filename_filters", "filters", ""))
+        # Filename suffix filters
+        self.filename_filters_var.set(self._get_ini("suffix_ignore", "tags", ""))
 
     def _get_ini(self, section, key, default):
         try:
@@ -117,21 +110,29 @@ class CustomizeApp:
         cp.read(CONFIG_FILE, encoding="utf-8")
 
         # Ensure all sections exist
-        for section in ["batch", "api", "extra_tags", "target_tag", "filename_filters"]:
+        for section in ["batch", "api", "extra_tags", "target_tag", "suffix_ignore"]:
             if not cp.has_section(section):
                 cp.add_section(section)
 
-        cp.set("batch", "threshold", self.threshold_var.get())
+        cp.set("batch", "wd_threshold", self.wd_threshold_var.get())
         cp.set("batch", "max_posts", self.max_posts_var.get())
         cp.set("api", "user_id", self.api_user_id_var.get())
         cp.set("api", "api_key", self.api_key_var.get())
         cp.set("extra_tags", "tags", self.extra_tags_var.get())
         cp.set("target_tag", "tag", self.target_tag_var.get())
 
-        # Filename filters
-        filters_text = self.filename_filters_var.get().strip()
-        cp.set("filename_filters", "filters", filters_text)
-        cp.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
+        # Filename suffix filters — save as comma-separated (ConfigParser can't parse multi-line)
+        filters_text = self.filter_text.get("1.0", tk.END).strip()
+        if "\n" in filters_text:
+            filters_text = ", ".join(s.strip() for s in filters_text.splitlines() if s.strip())
+        cp.set("suffix_ignore", "tags", filters_text)
+        print(f"[DEBUG] Saving suffix_ignore: {repr(filters_text)}")
+        print(f"[DEBUG] Writing to: {CONFIG_FILE}")
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            cp.write(f)
+            f.flush()
+            f.close()
+        print(f"[DEBUG] Saved successfully")
 
     def build_ui(self):
         # Main frame
@@ -159,14 +160,14 @@ class CustomizeApp:
         tab1 = ttk.Frame(self.notebook, padding=15)
         self.notebook.add(tab1, text="General")
 
-        ttk.Label(tab1, text="joytag accuracy or whatever", font=("Arial", 10, "bold")).pack(anchor="w")
-        ttk.Label(tab1, text="this is for tag confidence, anything lower than it gets removed. i find 0.25 to be peak, you can experiment!").pack(anchor="w", pady=(0, 5))
+        ttk.Label(tab1, text="tagger accuracy (SmilingWolf wd-eva02-large v3)", font=("Arial", 10, "bold")).pack(anchor="w")
 
         thresh_frame = ttk.Frame(tab1)
         thresh_frame.pack(fill="x", pady=5)
 
-        ttk.Entry(thresh_frame, textvariable=self.threshold_var, width=10, font=("Consolas", 12)).pack(side="left", padx=(0, 10))
-        ttk.Label(thresh_frame, text="0.01 to 1.0").pack(side="left")
+        ttk.Label(thresh_frame, text="threshold:").pack(side="left", padx=(0, 5))
+        ttk.Entry(thresh_frame, textvariable=self.wd_threshold_var, width=8, font=("Consolas", 12)).pack(side="left", padx=(0, 10))
+        ttk.Label(thresh_frame, text="0.01 to 1.0 · anything lower-confidence gets removed").pack(side="left")
 
         # API credentials
         ttk.Label(tab1, text="r34 api stuff yes", font=("Arial", 10, "bold")).pack(anchor="w", pady=(15, 5))
@@ -189,7 +190,7 @@ class CustomizeApp:
 
         # Filename filters
         ttk.Label(tab1, text="suffix filter", font=("Arial", 10, "bold")).pack(anchor="w", pady=(15, 5))
-        ttk.Label(tab1, text="one per line! say your watermarked image is -tag, it ignores images with that suffix wow. leave empty to process all images.").pack(anchor="w", pady=(0, 5))
+        ttk.Label(tab1, text="one per line! or separate with commas, say your watermarked image is -tag, it ignores images with that suffix wow. leave empty to process all images.").pack(anchor="w", pady=(0, 5))
 
         self.filter_text = tk.Text(tab1, font=("Consolas", 11), height=4, wrap="word", padx=8, pady=8)
         self.filter_text.pack(fill="x", pady=(0, 10))
@@ -283,10 +284,22 @@ class CustomizeApp:
             self.presets_text.insert("1.0", self.presets_path.read_text(encoding="utf-8"))
 
     def load_filename_filters_to_text(self):
-        filter_path = CONFIG_DIR / "filename_filters.txt"
-        if filter_path.exists():
+        # Read from config.ini suffix_ignore section
+        try:
+            cp = configparser.ConfigParser()
+            cp.read(CONFIG_FILE, encoding="utf-8")
+            text = cp.get("suffix_ignore", "tags", fallback="").strip()
+            print(f"[DEBUG] Loaded suffix_ignore from config.ini: {repr(text)}")
+            print(f"[DEBUG] Config file path: {CONFIG_FILE}")
+            # Convert comma-separated to newline for display
+            if "," in text:
+                text = text.replace(",", "\n")
             self.filter_text.delete("1.0", tk.END)
-            self.filter_text.insert("1.0", filter_path.read_text(encoding="utf-8"))
+            if text:
+                self.filter_text.insert("1.0", text)
+        except Exception as e:
+            print(f"[DEBUG] Error loading suffix_ignore: {e}")
+            pass
 
     def save_all(self):
         # Save rules
@@ -307,14 +320,15 @@ class CustomizeApp:
         messagebox.showinfo("Saved", "All settings saved to config.ini!", parent=self.root)
 
     def reset_threshold(self):
-        self.threshold_var.set("0.25")
+        self.wd_threshold_var.set("0.35")
 
     def run_update(self):
         # Save target tag to config
         cp = configparser.ConfigParser()
         cp.read(CONFIG_FILE, encoding="utf-8")
         cp.set("target_tag", "tag", self.target_tag_var.get().strip())
-        cp.write(open(CONFIG_FILE, 'w', encoding='utf-8'))
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            cp.write(f)
 
         import subprocess
         update_script = CONFIG_DIR / "models" / "refresh_tags.bat"
