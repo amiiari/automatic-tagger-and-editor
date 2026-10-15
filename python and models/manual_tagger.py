@@ -315,38 +315,17 @@ class App:
         return 'break'
 
     def _on_results_click(self, event):
-        # Get clicked index from active selection
-        idx = self.pre_results.curselection()
-        if idx:
-            idx = idx[0]
-            self._result_selection = idx
-            item = self._result_items[idx]
-            tags = item.get("tags", [])
-            is_active = all(t in self.tags_internal for t in tags)
-            if is_active:
-                self.remove_tags(tags)
-            else:
-                self.add_tags(tags)
-            self.pre_search_var.set('')
-            self._on_presets_search()
-        return 'break'
-
-    def _on_results_click(self, event):
-        """Apply preset when a search result is clicked."""
+        """Apply/remove the preset under the mouse. Uses nearest(event.y): this binding runs before the
+        Listbox moves its selection, so curselection() would still be the previous row."""
         if not self._result_items:
-            return
-        # Get the line and character position of the click
-        line = int(self.pre_results.index('insert').split('.')[0])
-        if 1 <= line <= len(self._result_items):
-            item = self._result_items[line - 1]
-            tags = item.get("tags", [])
-            is_active = all(t in self.tags_internal for t in tags)
-            if is_active:
-                self.remove_tags(tags)
-            else:
-                self.add_tags(tags)
-            self.pre_search_var.set('')  # Clear search
-            self._on_presets_search()  # Refresh
+            return 'break'
+        idx = self.pre_results.nearest(event.y)
+        if 0 <= idx < len(self._result_items):
+            self._result_selection = idx
+            self.pre_results.selection_clear(0, tk.END)
+            self.pre_results.selection_set(idx)
+            self._on_results_enter(event)
+        return 'break'
 
     def save_presets_to_disk(self):
         if self.sidebar_items and self.sidebar_items[0]["type"] == "preset":
